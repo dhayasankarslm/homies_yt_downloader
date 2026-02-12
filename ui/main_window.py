@@ -122,9 +122,9 @@ class YouTubeDownloader(QWidget):
     self.url_input = QLineEdit()
     self.url_input.setPlaceholderText("Paste YouTube link here…")
 
-    self.fetch_btn = QPushButton("⚡ Fetch")
-    self.clear_btn = QPushButton("🧹 Clear")
-    self.cancel_btn = QPushButton("🛑 Cancel")
+    self.fetch_btn = QPushButton("Fetch")
+    self.clear_btn = QPushButton("Clear")
+    self.cancel_btn = QPushButton("Cancel")
 
     self.fetch_btn.setObjectName("PrimaryBtn")
     self.clear_btn.setObjectName("GhostBtn")
@@ -158,7 +158,7 @@ class YouTubeDownloader(QWidget):
     info_right = QVBoxLayout()
     info_right.setSpacing(10)
 
-    self.title_label = QLabel("Paste a link and Fetch ✨")
+    self.title_label = QLabel("Paste a link and Fetch")
     self.title_label.setObjectName("VideoTitle")
     self.title_label.setWordWrap(True)
 
@@ -237,7 +237,7 @@ class YouTubeDownloader(QWidget):
     self.resolution_combo = QComboBox()
     self.resolution_combo.setPlaceholderText("Resolution")
 
-    self.video_download_btn = QPushButton("⬇️  Download Video")
+    self.video_download_btn = QPushButton("Download Video")
     self.video_download_btn.setObjectName("PrimaryBtn")
 
     row.addWidget(self.video_format_combo, 1)
@@ -276,7 +276,7 @@ class YouTubeDownloader(QWidget):
     self.audio_quality_combo = QComboBox()
     self.audio_quality_combo.addItems(["best", "320k", "192k", "128k"])
 
-    self.audio_download_btn = QPushButton("⬇️  Download Audio")
+    self.audio_download_btn = QPushButton("Download Audio")
     self.audio_download_btn.setObjectName("PrimaryBtn")
 
     row.addWidget(self.audio_format_combo, 1)
@@ -434,7 +434,7 @@ class YouTubeDownloader(QWidget):
     self.thumbnail_label.setText("Thumbnail preview")
     self.thumbnail_label.setPixmap(QPixmap())
     self.thumbnail_label.setScaledContents(False)
-    self.title_label.setText("Paste a link and Fetch ✨")
+    self.title_label.setText("Paste a link and Fetch ")
     self.thumbnail_btn.hide()
     self.progress_bar.setValue(0)
     self.set_status("Ready.")
@@ -446,11 +446,27 @@ class YouTubeDownloader(QWidget):
       self.thread.cancel()
       self.set_status("Cancelling…")
 
+  def sanitize_filename(self, name: str) -> str:
+    invalid_chars = r'<>:"/\|?*'
+    for ch in invalid_chars:
+      name = name.replace(ch, "")
+    return name.strip()
+
   def download_thumbnail(self):
     if not self.thumbnail_url:
       return
 
-    save_path, _ = QFileDialog.getSaveFileName(self, "Save Thumbnail", "", "JPEG Image (*.jpg)")
+    title = getattr(self, "video_title", "thumbnail")
+    safe_title = self.sanitize_filename(title)
+    default_name = f"{safe_title}_thumbnail.jpg"
+
+    save_path, _ = QFileDialog.getSaveFileName(
+      self,
+      "Save Thumbnail",
+      default_name,
+      "JPEG Image (*.jpg)"
+    )
+
     if not save_path:
       return
 
@@ -478,7 +494,17 @@ class YouTubeDownloader(QWidget):
 
     format_id = self.video_formats[key]["format_id"]
 
-    save_path, _ = QFileDialog.getSaveFileName(self, "Save Video", "", f"{ext.upper()} files (*.{ext})")
+    title = self.title_label.text()
+    safe_title = self.sanitize_filename(title)
+    default_name = f"{safe_title}.{ext}"
+
+    save_path, _ = QFileDialog.getSaveFileName(
+      self,
+      "Save Video",
+      default_name,
+      f"{ext.upper()} files (*.{ext})"
+    )
+
     if not save_path:
       return
 
@@ -495,7 +521,17 @@ class YouTubeDownloader(QWidget):
 
     ext = self.audio_format_combo.currentText()
 
-    save_path, _ = QFileDialog.getSaveFileName(self, "Save Audio", "", f"{ext.upper()} files (*.{ext})")
+    title = self.title_label.text()
+    safe_title = self.sanitize_filename(title)
+    default_name = f"{safe_title}.{ext}"
+
+    save_path, _ = QFileDialog.getSaveFileName(
+      self,
+      "Save Audio",
+      default_name,
+      f"{ext.upper()} files (*.{ext})"
+    )
+
     if not save_path:
       return
 
