@@ -1,9 +1,12 @@
 import sys
+import os
 
 from PySide6.QtWidgets import QApplication
 
 from ui.main_window import YouTubeDownloader
 from ui.splash_screen import SplashScreen
+
+os.environ["PATH"] += os.pathsep + "ffmpeg"
 
 if __name__ == "__main__":
   app = QApplication(sys.argv)
