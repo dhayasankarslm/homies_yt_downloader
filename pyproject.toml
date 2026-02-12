@@ -1,0 +1,18 @@
+[project]
+name = "ytd"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "pillow>=12.1.1",
+    "pyqt5>=5.15.11",
+    "requests>=2.32.5",
+    "yt-dlp>=2026.2.4",
+]
+
+[tool.uv]
+required-environments = [
+    "sys_platform == 'win32' and platform_machine == 'AMD64'"
+]
+
