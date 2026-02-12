@@ -10,12 +10,7 @@ if __name__ == "__main__":
   splash = SplashScreen()
   window = YouTubeDownloader()
 
-
-  def show_main_window():
-    window.show()
-
-
-  splash.finished.connect(show_main_window)
+  splash.finished.connect(window.show)
   splash.start_animation()
 
   sys.exit(app.exec())
