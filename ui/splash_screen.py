@@ -1,5 +1,5 @@
 from PySide6.QtCore import QEasingCurve, QPropertyAnimation, Qt, QTimer, Signal
-from PySide6.QtGui import QPixmap
+from PySide6.QtGui import QPixmap, QGuiApplication
 from PySide6.QtWidgets import QLabel, QVBoxLayout, QWidget, QProgressBar
 
 from utils.helpers import resource_path
@@ -39,7 +39,18 @@ class SplashScreen(QWidget):
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_progress)
 
+    def center_on_screen(self):
+      screen = QGuiApplication.primaryScreen()
+      screen_geometry = screen.availableGeometry()
+
+      splash_geometry = self.frameGeometry()
+      splash_geometry.moveCenter(screen_geometry.center())
+
+      self.move(splash_geometry.topLeft())
+
     def start_animation(self):
+        self.adjustSize()
+        self.center_on_screen()
         self.show()
 
         self.anim = QPropertyAnimation(self, b"windowOpacity")
