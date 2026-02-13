@@ -3,298 +3,287 @@ from io import BytesIO
 import requests
 from PIL import Image
 from PySide6.QtCore import QEasingCurve, QPropertyAnimation, Qt
-from PySide6.QtGui import QFont, QIcon, QPixmap
+from PySide6.QtGui import QFont, QPixmap
 from PySide6.QtWidgets import (
-    QApplication, QComboBox, QFileDialog, QFrame,
-    QHBoxLayout, QLabel, QLineEdit, QProgressBar,
-    QPushButton, QSizePolicy, QStackedWidget,
-    QVBoxLayout, QWidget
+  QApplication, QComboBox, QFileDialog, QFrame,
+  QHBoxLayout, QLabel, QLineEdit, QProgressBar,
+  QPushButton, QSizePolicy, QStackedWidget,
+  QVBoxLayout, QWidget
 )
 from yt_dlp import YoutubeDL
 
 from threads.download_thread import DownloadThread
 from ui.styles import get_stylesheet
-from utils.helpers import resource_path
 from ui.ui_helpers import create_card, apply_shadow
 
 
 class YouTubeDownloaderPage(QWidget):
   def __init__(self):
-      super().__init__()
+    super().__init__()
 
-      self.current_url = None
-      self.thumbnail_url = None
-      self.video_formats = {}
-      self.audio_formats = {}
-      self.thread = None
-      self._fade_anim = None
+    self.current_url = None
+    self.thumbnail_url = None
+    self.video_formats = {}
+    self.audio_formats = {}
+    self.thread = None
+    self._fade_anim = None
 
-      self.init_ui()
-      self.apply_style()
+    self.init_ui()
+    self.apply_style()
 
   def fade_in_widget(self, widget):
-      if not widget:
-          return
-      w = widget
-      start = w.geometry()
-      end = w.geometry().adjusted(0, -6, 0, -6)
-      anim = QPropertyAnimation(w, b"geometry")
-      anim.setDuration(220)
-      anim.setEasingCurve(QEasingCurve.OutCubic)
-      anim.setStartValue(start)
-      anim.setEndValue(end)
-      anim.start()
-      self._fade_anim = anim
+    if not widget:
+      return
+    w = widget
+    start = w.geometry()
+    end = w.geometry().adjusted(0, -6, 0, -6)
+    anim = QPropertyAnimation(w, b"geometry")
+    anim.setDuration(220)
+    anim.setEasingCurve(QEasingCurve.OutCubic)
+    anim.setStartValue(start)
+    anim.setEndValue(end)
+    anim.start()
+    self._fade_anim = anim
 
   def init_ui(self):
-      root = QVBoxLayout(self)
-      root.setContentsMargins(0, 0, 0, 0)
-      root.setSpacing(16)
+    root = QVBoxLayout(self)
+    root.setContentsMargins(0, 0, 0, 0)
+    root.setSpacing(16)
 
-      # ===== HERO SECTION =====
-      hero_layout = QHBoxLayout()
-      hero_layout.setSpacing(12)
-      hero_layout.setContentsMargins(22, 18, 22, 18)
+    hero_layout = QHBoxLayout()
+    hero_layout.setSpacing(12)
+    hero_layout.setContentsMargins(22, 18, 22, 18)
 
-      title_container = QVBoxLayout()
-      title_container.setSpacing(4)
+    title_container = QVBoxLayout()
+    title_container.setSpacing(4)
 
-      hero_title = QLabel("Homies YouTube Downloader")
-      hero_title.setObjectName("HeroTitle")
+    hero_title = QLabel("Homies YouTube Downloader")
+    hero_title.setObjectName("HeroTitle")
 
-      hero_sub = QLabel("Download any youtube videos and audios;)")
-      hero_sub.setObjectName("HeroSub")
+    hero_sub = QLabel("Download any youtube videos and audios;)")
+    hero_sub.setObjectName("HeroSub")
 
-      title_container.addWidget(hero_title)
-      title_container.addWidget(hero_sub)
+    title_container.addWidget(hero_title)
+    title_container.addWidget(hero_sub)
 
-      self.btn_video_mode = QPushButton("🎥  Video")
-      self.btn_audio_mode = QPushButton("🎧  Audio")
-      self.btn_video_mode.setObjectName("SideBtn")
-      self.btn_audio_mode.setObjectName("SideBtn")
+    self.btn_video_mode = QPushButton("🎥  Video")
+    self.btn_audio_mode = QPushButton("🎧  Audio")
+    self.btn_video_mode.setObjectName("SideBtn")
+    self.btn_audio_mode.setObjectName("SideBtn")
 
-      mode_layout = QHBoxLayout()
-      mode_layout.setSpacing(8)
-      mode_layout.addWidget(self.btn_video_mode)
-      mode_layout.addWidget(self.btn_audio_mode)
+    mode_layout = QHBoxLayout()
+    mode_layout.setSpacing(8)
+    mode_layout.addWidget(self.btn_video_mode)
+    mode_layout.addWidget(self.btn_audio_mode)
 
-      hero_layout.addLayout(title_container)
-      hero_layout.addStretch(1)
-      hero_layout.addLayout(mode_layout)
+    hero_layout.addLayout(title_container)
+    hero_layout.addStretch(1)
+    hero_layout.addLayout(mode_layout)
 
-      hero = create_card(hero_layout)
+    hero = create_card(hero_layout)
 
-      # ===== URL SECTION =====
-      url_layout = QHBoxLayout()
-      url_layout.setSpacing(12)
-      url_layout.setContentsMargins(18, 16, 18, 16)
+    url_layout = QHBoxLayout()
+    url_layout.setSpacing(12)
+    url_layout.setContentsMargins(18, 16, 18, 16)
 
-      self.url_input = QLineEdit()
-      self.url_input.setPlaceholderText("Paste YouTube link here…")
+    self.url_input = QLineEdit()
+    self.url_input.setPlaceholderText("Paste YouTube link here…")
 
-      self.fetch_btn = QPushButton("Fetch")
-      self.clear_btn = QPushButton("Clear")
-      self.cancel_btn = QPushButton("Cancel")
+    self.fetch_btn = QPushButton("Fetch")
+    self.clear_btn = QPushButton("Clear")
+    self.cancel_btn = QPushButton("Cancel")
 
-      self.fetch_btn.setObjectName("PrimaryBtn")
-      self.clear_btn.setObjectName("GhostBtn")
-      self.cancel_btn.setObjectName("GhostBtn")
+    self.fetch_btn.setObjectName("PrimaryBtn")
+    self.clear_btn.setObjectName("GhostBtn")
+    self.cancel_btn.setObjectName("GhostBtn")
 
-      url_layout.addWidget(self.url_input, 1)
-      url_layout.addWidget(self.fetch_btn)
-      url_layout.addWidget(self.clear_btn)
-      url_layout.addWidget(self.cancel_btn)
+    url_layout.addWidget(self.url_input, 1)
+    url_layout.addWidget(self.fetch_btn)
+    url_layout.addWidget(self.clear_btn)
+    url_layout.addWidget(self.cancel_btn)
 
-      url_card = create_card(url_layout)
+    url_card = create_card(url_layout)
 
-      # ===== MEDIA PREVIEW =====
-      media_layout = QHBoxLayout()
-      media_layout.setSpacing(18)
-      media_layout.setContentsMargins(18, 18, 18, 18)
+    media_layout = QHBoxLayout()
+    media_layout.setSpacing(18)
+    media_layout.setContentsMargins(18, 18, 18, 18)
 
-      thumb_wrap = QFrame()
-      thumb_wrap.setObjectName("ThumbWrap")
-      thumb_wrap.setFixedSize(420, 236)
-      apply_shadow(thumb_wrap, blur=40, x=0, y=12)
+    thumb_wrap = QFrame()
+    thumb_wrap.setObjectName("ThumbWrap")
+    thumb_wrap.setFixedSize(420, 236)
+    apply_shadow(thumb_wrap, blur=40, x=0, y=12)
 
-      thumb_inner = QVBoxLayout(thumb_wrap)
-      thumb_inner.setContentsMargins(10, 10, 10, 10)
+    thumb_inner = QVBoxLayout(thumb_wrap)
+    thumb_inner.setContentsMargins(10, 10, 10, 10)
 
-      self.thumbnail_label = QLabel("Thumbnail preview")
-      self.thumbnail_label.setAlignment(Qt.AlignCenter)
-      self.thumbnail_label.setObjectName("ThumbLabel")
-      self.thumbnail_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+    self.thumbnail_label = QLabel("Thumbnail preview")
+    self.thumbnail_label.setAlignment(Qt.AlignCenter)
+    self.thumbnail_label.setObjectName("ThumbLabel")
+    self.thumbnail_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-      thumb_inner.addWidget(self.thumbnail_label)
+    thumb_inner.addWidget(self.thumbnail_label)
 
-      info_right = QVBoxLayout()
-      info_right.setSpacing(10)
+    info_right = QVBoxLayout()
+    info_right.setSpacing(10)
 
-      self.title_label = QLabel("Paste a link and Fetch")
-      self.title_label.setObjectName("VideoTitle")
-      self.title_label.setWordWrap(True)
+    self.title_label = QLabel("Paste a link and Fetch")
+    self.title_label.setObjectName("VideoTitle")
+    self.title_label.setWordWrap(True)
 
-      self.thumbnail_btn = QPushButton("🖼  Download Thumbnail")
-      self.thumbnail_btn.setObjectName("PrimaryBtn")
-      self.thumbnail_btn.hide()
+    self.thumbnail_btn = QPushButton("🖼  Download Thumbnail")
+    self.thumbnail_btn.setObjectName("PrimaryBtn")
+    self.thumbnail_btn.hide()
 
-      info_right.addWidget(self.title_label)
-      info_right.addWidget(self.thumbnail_btn)
-      info_right.addStretch(1)
+    info_right.addWidget(self.title_label)
+    info_right.addWidget(self.thumbnail_btn)
+    info_right.addStretch(1)
 
-      media_layout.addWidget(thumb_wrap, 0)
-      media_layout.addLayout(info_right, 1)
+    media_layout.addWidget(thumb_wrap, 0)
+    media_layout.addLayout(info_right, 1)
 
-      media_card = create_card(media_layout)
+    media_card = create_card(media_layout)
 
-      # ===== STACKED MODE PAGES =====
-      self.pages = QStackedWidget()
-      self.video_page = self.build_video_page()
-      self.audio_page = self.build_audio_page()
+    self.pages = QStackedWidget()
+    self.video_page = self.build_video_page()
+    self.audio_page = self.build_audio_page()
 
-      self.pages.addWidget(self.video_page)
-      self.pages.addWidget(self.audio_page)
+    self.pages.addWidget(self.video_page)
+    self.pages.addWidget(self.audio_page)
 
-      # ===== STATUS SECTION =====
-      status_layout = QVBoxLayout()
-      status_layout.setSpacing(10)
-      status_layout.setContentsMargins(18, 16, 18, 16)
+    status_layout = QVBoxLayout()
+    status_layout.setSpacing(10)
+    status_layout.setContentsMargins(18, 16, 18, 16)
 
-      self.progress_bar = QProgressBar()
-      self.progress_bar.setRange(0, 100)
-      self.progress_bar.setValue(0)
-      self.progress_bar.setTextVisible(False)
-      self.progress_bar.setObjectName("Progress")
+    self.progress_bar = QProgressBar()
+    self.progress_bar.setRange(0, 100)
+    self.progress_bar.setValue(0)
+    self.progress_bar.setTextVisible(False)
+    self.progress_bar.setObjectName("Progress")
 
-      self.status_label = QLabel("Ready.")
-      self.status_label.setObjectName("Status")
+    self.status_label = QLabel("Ready.")
+    self.status_label.setObjectName("Status")
 
-      status_layout.addWidget(self.progress_bar)
-      status_layout.addWidget(self.status_label)
+    status_layout.addWidget(self.progress_bar)
+    status_layout.addWidget(self.status_label)
 
-      status_card = create_card(status_layout)
+    status_card = create_card(status_layout)
 
-      # ===== ADD TO ROOT =====
-      root.addWidget(hero)
-      root.addWidget(url_card)
-      root.addWidget(media_card)
-      root.addWidget(self.pages, 1)
-      root.addWidget(status_card)
+    root.addWidget(hero)
+    root.addWidget(url_card)
+    root.addWidget(media_card)
+    root.addWidget(self.pages, 1)
+    root.addWidget(status_card)
 
-      # ===== CONNECTIONS =====
-      self.fetch_btn.clicked.connect(self.fetch_video)
-      self.clear_btn.clicked.connect(self.clear_all)
-      self.cancel_btn.clicked.connect(self.cancel_download)
-      self.thumbnail_btn.clicked.connect(self.download_thumbnail)
+    self.fetch_btn.clicked.connect(self.fetch_video)
+    self.clear_btn.clicked.connect(self.clear_all)
+    self.cancel_btn.clicked.connect(self.cancel_download)
+    self.thumbnail_btn.clicked.connect(self.download_thumbnail)
 
-      self.btn_video_mode.clicked.connect(lambda: self.switch_page(0))
-      self.btn_audio_mode.clicked.connect(lambda: self.switch_page(1))
+    self.btn_video_mode.clicked.connect(lambda: self.switch_page(0))
+    self.btn_audio_mode.clicked.connect(lambda: self.switch_page(1))
 
   def build_video_page(self):
-      layout = QVBoxLayout()
-      layout.setSpacing(14)
-      layout.setContentsMargins(0, 0, 0, 0)
+    layout = QVBoxLayout()
+    layout.setSpacing(14)
+    layout.setContentsMargins(0, 0, 0, 0)
 
-      row = QHBoxLayout()
-      row.setSpacing(12)
-      row.setContentsMargins(18, 18, 18, 18)
+    row = QHBoxLayout()
+    row.setSpacing(12)
+    row.setContentsMargins(18, 18, 18, 18)
 
-      self.video_format_combo = QComboBox()
-      self.video_format_combo.addItems(["mp4", "webm"])
+    self.video_format_combo = QComboBox()
+    self.video_format_combo.addItems(["mp4", "webm"])
 
-      self.resolution_combo = QComboBox()
-      self.resolution_combo.setPlaceholderText("Resolution")
+    self.resolution_combo = QComboBox()
+    self.resolution_combo.setPlaceholderText("Resolution")
 
-      self.video_download_btn = QPushButton("Download Video")
-      self.video_download_btn.setObjectName("PrimaryBtn")
+    self.video_download_btn = QPushButton("Download Video")
+    self.video_download_btn.setObjectName("PrimaryBtn")
 
-      row.addWidget(self.video_format_combo, 1)
-      row.addWidget(self.resolution_combo, 2)
-      row.addWidget(self.video_download_btn, 1)
+    row.addWidget(self.video_format_combo, 1)
+    row.addWidget(self.resolution_combo, 2)
+    row.addWidget(self.video_download_btn, 1)
 
-      card = create_card(row)
+    card = create_card(row)
 
-      hint = QLabel("Video mode: Choose container + resolution. Downloads best audio and merges automatically.")
-      hint.setObjectName("Hint")
+    hint = QLabel("Video mode: Choose container + resolution. Downloads best audio and merges automatically.")
+    hint.setObjectName("Hint")
 
-      layout.addWidget(card)
-      layout.addWidget(hint)
-      layout.addStretch(1)
+    layout.addWidget(card)
+    layout.addWidget(hint)
+    layout.addStretch(1)
 
-      page = QFrame()
-      page.setLayout(layout)
+    page = QFrame()
+    page.setLayout(layout)
 
-      self.video_format_combo.currentTextChanged.connect(self.update_video_resolutions)
-      self.video_download_btn.clicked.connect(self.download_video)
+    self.video_format_combo.currentTextChanged.connect(self.update_video_resolutions)
+    self.video_download_btn.clicked.connect(self.download_video)
 
-      return page
+    return page
 
   def build_audio_page(self):
-      layout = QVBoxLayout()
-      layout.setSpacing(14)
-      layout.setContentsMargins(0, 0, 0, 0)
+    layout = QVBoxLayout()
+    layout.setSpacing(14)
+    layout.setContentsMargins(0, 0, 0, 0)
 
-      row = QHBoxLayout()
-      row.setSpacing(12)
-      row.setContentsMargins(18, 18, 18, 18)
+    row = QHBoxLayout()
+    row.setSpacing(12)
+    row.setContentsMargins(18, 18, 18, 18)
 
-      self.audio_format_combo = QComboBox()
-      self.audio_format_combo.addItems(["mp3", "m4a", "webm"])
+    self.audio_format_combo = QComboBox()
+    self.audio_format_combo.addItems(["mp3", "m4a", "webm"])
 
-      self.audio_quality_combo = QComboBox()
-      self.audio_quality_combo.addItems(["best", "320k", "192k", "128k"])
+    self.audio_quality_combo = QComboBox()
+    self.audio_quality_combo.addItems(["best", "320k", "192k", "128k"])
 
-      self.audio_download_btn = QPushButton("Download Audio")
-      self.audio_download_btn.setObjectName("PrimaryBtn")
+    self.audio_download_btn = QPushButton("Download Audio")
+    self.audio_download_btn.setObjectName("PrimaryBtn")
 
-      row.addWidget(self.audio_format_combo, 1)
-      row.addWidget(self.audio_quality_combo, 2)
-      row.addWidget(self.audio_download_btn, 1)
+    row.addWidget(self.audio_format_combo, 1)
+    row.addWidget(self.audio_quality_combo, 2)
+    row.addWidget(self.audio_download_btn, 1)
 
-      card = create_card(row)
+    card = create_card(row)
 
-      hint = QLabel("Audio mode: Downloads best audio. MP3 conversion needs FFmpeg installed.")
-      hint.setObjectName("Hint")
+    hint = QLabel("Audio mode: Downloads best audio. MP3 conversion needs FFmpeg installed.")
+    hint.setObjectName("Hint")
 
-      layout.addWidget(card)
-      layout.addWidget(hint)
-      layout.addStretch(1)
+    layout.addWidget(card)
+    layout.addWidget(hint)
+    layout.addStretch(1)
 
-      page = QFrame()
-      page.setLayout(layout)
+    page = QFrame()
+    page.setLayout(layout)
 
-      self.audio_download_btn.clicked.connect(self.download_audio)
+    self.audio_download_btn.clicked.connect(self.download_audio)
 
-      return page
+    return page
 
   def switch_page(self, index: int):
-      self.pages.setCurrentIndex(index)
-      self.fade_in_widget(self.pages.currentWidget())
+    self.pages.setCurrentIndex(index)
+    self.fade_in_widget(self.pages.currentWidget())
 
-      if index == 0:
-          self.btn_video_mode.setProperty("active", True)
-          self.btn_audio_mode.setProperty("active", False)
-      else:
-          self.btn_video_mode.setProperty("active", False)
-          self.btn_audio_mode.setProperty("active", True)
-
-      self.btn_video_mode.style().unpolish(self.btn_video_mode)
-      self.btn_video_mode.style().polish(self.btn_video_mode)
-      self.btn_audio_mode.style().unpolish(self.btn_audio_mode)
-      self.btn_audio_mode.style().polish(self.btn_audio_mode)
-
-  def apply_style(self):
-      font = QFont("Segoe UI")
-      font.setPointSize(10)
-      QApplication.instance().setFont(font)
-      self.setStyleSheet(get_stylesheet())
-
+    if index == 0:
       self.btn_video_mode.setProperty("active", True)
       self.btn_audio_mode.setProperty("active", False)
-      self.switch_page(0)
+    else:
+      self.btn_video_mode.setProperty("active", False)
+      self.btn_audio_mode.setProperty("active", True)
 
-    # --- All download / processing logic remains unchanged below ---
+    self.btn_video_mode.style().unpolish(self.btn_video_mode)
+    self.btn_video_mode.style().polish(self.btn_video_mode)
+    self.btn_audio_mode.style().unpolish(self.btn_audio_mode)
+    self.btn_audio_mode.style().polish(self.btn_audio_mode)
 
+  def apply_style(self):
+    font = QFont("Segoe UI")
+    font.setPointSize(10)
+    QApplication.instance().setFont(font)
+    self.setStyleSheet(get_stylesheet())
+
+    self.btn_video_mode.setProperty("active", True)
+    self.btn_audio_mode.setProperty("active", False)
+    self.switch_page(0)
 
   def set_status(self, text: str):
     self.status_label.setText(text)
