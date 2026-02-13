@@ -2,7 +2,7 @@ from io import BytesIO
 
 import requests
 from PIL import Image
-from PySide6.QtCore import QEasingCurve, QPropertyAnimation, Qt
+from PySide6.QtCore import QEasingCurve, QPropertyAnimation, Qt, Signal
 from PySide6.QtGui import QFont, QIcon, QPixmap
 from PySide6.QtWidgets import (
   QApplication, QComboBox, QFileDialog, QFrame,
@@ -19,6 +19,9 @@ from utils.helpers import resource_path
 
 
 class YouTubeDownloaderPage(QWidget):
+
+  go_home = Signal()
+
   def __init__(self):
     super().__init__()
 
@@ -93,12 +96,17 @@ class YouTubeDownloaderPage(QWidget):
     hero_layout.setSpacing(6)
     hero_layout.setContentsMargins(22, 18, 22, 18)
 
+    back_btn = QPushButton("← Back")
+    back_btn.setObjectName("GhostBtn")
+    back_btn.clicked.connect(self.go_home.emit)
+
     hero_title = QLabel("Homies YouTube Downloader")
     hero_title.setObjectName("HeroTitle")
 
     hero_sub = QLabel("Download any youtube videos and audios;)")
     hero_sub.setObjectName("HeroSub")
 
+    hero_layout.addWidget(back_btn, alignment=Qt.AlignLeft)
     hero_layout.addWidget(hero_title)
     hero_layout.addWidget(hero_sub)
     hero = create_card(hero_layout)
@@ -314,7 +322,6 @@ class YouTubeDownloaderPage(QWidget):
     self.btn_video_mode.setProperty("active", True)
     self.btn_audio_mode.setProperty("active", False)
     self.switch_page(0)
-
 
   def set_status(self, text: str):
     self.status_label.setText(text)

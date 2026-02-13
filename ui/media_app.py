@@ -30,6 +30,10 @@ class MediaApp(QWidget):
       lambda: self.pages.setCurrentIndex(1)
     )
 
+    self.youtube.go_home.connect(
+      lambda: self.pages.setCurrentIndex(0)
+    )
+
     layout = QVBoxLayout(self)
     layout.setContentsMargins(0, 0, 0, 0)
     layout.addWidget(self.pages)
