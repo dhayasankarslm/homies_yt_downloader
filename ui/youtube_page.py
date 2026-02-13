@@ -13,7 +13,7 @@ from ui.styles import get_stylesheet
 from utils.helpers import resource_path
 
 
-class YouTubeDownloader(QWidget):
+class YouTubeDownloaderPage(QWidget):
   def __init__(self):
     super().__init__()
 
