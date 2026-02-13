@@ -3,13 +3,18 @@ from io import BytesIO
 import requests
 from PIL import Image
 from PySide6.QtCore import QEasingCurve, QPropertyAnimation, Qt
-from PySide6.QtGui import QColor, QFont, QIcon, QPixmap
-from PySide6.QtWidgets import (QApplication, QComboBox, QFileDialog, QFrame, QGraphicsDropShadowEffect, QHBoxLayout, QLabel, QLineEdit, QProgressBar, QPushButton, QSizePolicy,
-                               QStackedWidget, QVBoxLayout, QWidget)
+from PySide6.QtGui import QFont, QIcon, QPixmap
+from PySide6.QtWidgets import (
+  QApplication, QComboBox, QFileDialog, QFrame,
+  QHBoxLayout, QLabel, QLineEdit, QProgressBar,
+  QPushButton, QSizePolicy, QStackedWidget,
+  QVBoxLayout, QWidget
+)
 from yt_dlp import YoutubeDL
 
 from threads.download_thread import DownloadThread
 from ui.styles import get_stylesheet
+from ui.ui_helpers import create_card, apply_shadow
 from utils.helpers import resource_path
 
 
@@ -19,7 +24,6 @@ class YouTubeDownloaderPage(QWidget):
 
     self.setWindowTitle("HOMIES YOUTUBE Downloader")
     self.setMinimumSize(1100, 700)
-
     self.setWindowIcon(QIcon(resource_path("homies_yt_downloader_icon.ico")))
 
     self.current_url = None
@@ -27,26 +31,10 @@ class YouTubeDownloaderPage(QWidget):
     self.video_formats = {}
     self.audio_formats = {}
     self.thread = None
-
     self._fade_anim = None
 
     self.init_ui()
     self.apply_style()
-
-  def apply_shadow(self, widget, blur=30, x=0, y=10, opacity=120):
-    shadow = QGraphicsDropShadowEffect(self)
-    shadow.setBlurRadius(blur)
-    shadow.setOffset(x, y)
-    shadow.setColor(QColor(0, 0, 0, opacity))
-    widget.setGraphicsEffect(shadow)
-
-  def card(self, layout=None):
-    frame = QFrame()
-    frame.setObjectName("Card")
-    if layout is not None:
-      frame.setLayout(layout)
-    self.apply_shadow(frame, blur=35, x=0, y=12)
-    return frame
 
   def fade_in_widget(self, widget):
     if not widget:
@@ -94,7 +82,7 @@ class YouTubeDownloaderPage(QWidget):
     help_box.setObjectName("HelpBox")
     sidebar_layout.addWidget(help_box)
 
-    sidebar = self.card(sidebar_layout)
+    sidebar = create_card(sidebar_layout)
     sidebar.setFixedWidth(260)
 
     main_layout = QVBoxLayout()
@@ -113,7 +101,7 @@ class YouTubeDownloaderPage(QWidget):
 
     hero_layout.addWidget(hero_title)
     hero_layout.addWidget(hero_sub)
-    hero = self.card(hero_layout)
+    hero = create_card(hero_layout)
 
     url_layout = QHBoxLayout()
     url_layout.setSpacing(12)
@@ -134,7 +122,8 @@ class YouTubeDownloaderPage(QWidget):
     url_layout.addWidget(self.fetch_btn)
     url_layout.addWidget(self.clear_btn)
     url_layout.addWidget(self.cancel_btn)
-    url_card = self.card(url_layout)
+
+    url_card = create_card(url_layout)
 
     media_layout = QHBoxLayout()
     media_layout.setSpacing(18)
@@ -143,7 +132,7 @@ class YouTubeDownloaderPage(QWidget):
     thumb_wrap = QFrame()
     thumb_wrap.setObjectName("ThumbWrap")
     thumb_wrap.setFixedSize(420, 236)
-    self.apply_shadow(thumb_wrap, blur=40, x=0, y=12)
+    apply_shadow(thumb_wrap, blur=40, x=0, y=12)
 
     thumb_inner = QVBoxLayout(thumb_wrap)
     thumb_inner.setContentsMargins(10, 10, 10, 10)
@@ -173,7 +162,7 @@ class YouTubeDownloaderPage(QWidget):
     media_layout.addWidget(thumb_wrap, 0)
     media_layout.addLayout(info_right, 1)
 
-    media_card = self.card(media_layout)
+    media_card = create_card(media_layout)
 
     self.pages = QStackedWidget()
     self.pages.setObjectName("Pages")
@@ -199,7 +188,8 @@ class YouTubeDownloaderPage(QWidget):
 
     status_layout.addWidget(self.progress_bar)
     status_layout.addWidget(self.status_label)
-    status_card = self.card(status_layout)
+
+    status_card = create_card(status_layout)
 
     main_layout.addWidget(hero)
     main_layout.addWidget(url_card)
@@ -244,7 +234,7 @@ class YouTubeDownloaderPage(QWidget):
     row.addWidget(self.resolution_combo, 2)
     row.addWidget(self.video_download_btn, 1)
 
-    card = self.card(row)
+    card = create_card(row)
 
     hint = QLabel("Video mode: Choose container + resolution. Downloads best audio and merges automatically.")
     hint.setObjectName("Hint")
@@ -283,7 +273,7 @@ class YouTubeDownloaderPage(QWidget):
     row.addWidget(self.audio_quality_combo, 2)
     row.addWidget(self.audio_download_btn, 1)
 
-    card = self.card(row)
+    card = create_card(row)
 
     hint = QLabel("Audio mode: Downloads best audio. MP3 conversion needs FFmpeg installed.")
     hint.setObjectName("Hint")
@@ -324,6 +314,7 @@ class YouTubeDownloaderPage(QWidget):
     self.btn_video_mode.setProperty("active", True)
     self.btn_audio_mode.setProperty("active", False)
     self.switch_page(0)
+
 
   def set_status(self, text: str):
     self.status_label.setText(text)
