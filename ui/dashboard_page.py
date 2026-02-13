@@ -1,12 +1,13 @@
 from PySide6.QtWidgets import (
-    QWidget, QLabel, QVBoxLayout, QHBoxLayout
+  QWidget, QLabel, QVBoxLayout, QHBoxLayout, QPushButton
 )
 from ui.ui_helpers import create_card
 
 
 class DashboardPage(QWidget):
-    def __init__(self):
+    def __init__(self, open_youtube_callback=None):
         super().__init__()
+        self.open_youtube_callback = open_youtube_callback
 
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
@@ -46,6 +47,12 @@ class DashboardPage(QWidget):
         yt_layout.addWidget(yt_title)
         yt_layout.addWidget(yt_desc)
         yt_layout.addStretch(1)
+
+        open_btn = QPushButton("Open YouTube Tool")
+        open_btn.setObjectName("PrimaryBtn")
+        open_btn.clicked.connect(self.open_youtube_callback)
+
+        yt_layout.addWidget(open_btn)
 
         yt_card = create_card(yt_layout)
 

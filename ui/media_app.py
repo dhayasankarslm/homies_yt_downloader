@@ -61,7 +61,9 @@ class MediaApp(QWidget):
         # ===== PAGES =====
         self.pages = QStackedWidget()
 
-        self.dashboard = DashboardPage()
+        self.dashboard = DashboardPage(
+          open_youtube_callback=lambda: self.switch_page(1)
+        )
         self.youtube = YouTubeDownloaderPage()
 
         self.pages.addWidget(self.dashboard)  # index 0
